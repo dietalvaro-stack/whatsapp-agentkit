@@ -1,0 +1,7 @@
+{
+  "descripcion": "Lista de números de teléfono guardados. El agente SOLO responderá a números que NO estén en esta lista.",
+  "numeros_guardados": [
+    "+34123456789"
+  ],
+  "notas": "Agrega aquí los números que tienes guardados en tu libreta de contactos. Formato: +CODIGO_PAIS + NUMERO"
+}

@@ -7,6 +7,7 @@ Funciona con cualquier proveedor (Whapi, Meta, Twilio) gracias a la capa de prov
 """
 
 import os
+import json
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
@@ -28,6 +29,33 @@ logger = logging.getLogger("agentkit")
 # Proveedor de WhatsApp (se configura en .env con WHATSAPP_PROVIDER)
 proveedor = obtener_proveedor()
 PORT = int(os.getenv("PORT", 8000))
+
+
+def cargar_numeros_guardados() -> list[str]:
+    """Lee los números de contactos guardados desde config/saved_contacts.json."""
+    try:
+        with open("config/saved_contacts.json", "r", encoding="utf-8") as f:
+            config = json.load(f)
+            return config.get("numeros_guardados", [])
+    except FileNotFoundError:
+        logger.warning("config/saved_contacts.json no encontrado")
+        return []
+    except json.JSONDecodeError:
+        logger.error("Error al parsear config/saved_contacts.json")
+        return []
+
+
+def es_numero_guardado(telefono: str, numeros_guardados: list[str]) -> bool:
+    """Verifica si un número está en la lista de contactos guardados."""
+    # Normalizar el número (remover espacios, guiones, etc.)
+    telefono_limpio = telefono.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+
+    for numero_guardado in numeros_guardados:
+        numero_guardado_limpio = numero_guardado.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+        if telefono_limpio.endswith(numero_guardado_limpio) or numero_guardado_limpio.endswith(telefono_limpio):
+            return True
+
+    return False
 
 
 @asynccontextmanager
@@ -67,8 +95,12 @@ async def webhook_handler(request: Request):
     """
     Recibe mensajes de WhatsApp via Whapi.cloud.
     Procesa el mensaje, genera respuesta con Claude y la envía de vuelta.
+    SOLO responde a números que NO estén en la lista de contactos guardados.
     """
     try:
+        # Cargar números guardados al inicio
+        numeros_guardados = cargar_numeros_guardados()
+
         # Parsear webhook — el proveedor normaliza el formato
         mensajes = await proveedor.parsear_webhook(request)
 
@@ -77,7 +109,12 @@ async def webhook_handler(request: Request):
             if msg.es_propio or not msg.texto:
                 continue
 
-            logger.info(f"Mensaje de {msg.telefono}: {msg.texto}")
+            # Verificar si el número está guardado
+            if es_numero_guardado(msg.telefono, numeros_guardados):
+                logger.info(f"Mensaje ignorado de número guardado: {msg.telefono}")
+                continue
+
+            logger.info(f"Mensaje de número desconocido {msg.telefono}: {msg.texto}")
 
             # Obtener historial ANTES de guardar el mensaje actual
             # (brain.py agrega el mensaje actual, evitando duplicados)
