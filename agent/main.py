@@ -69,7 +69,11 @@ async def webhook_handler(request: Request):
     """
     Recibe mensajes de WhatsApp via Whapi.cloud.
     Procesa el mensaje, genera respuesta con Claude y la envía de vuelta.
-    SOLO responde a números desconocidos (sin nombre de contacto).
+
+    Lógica simple:
+    - Si contacto tiene nombre en WhatsApp (está guardado) → IGNORAR (sin excepciones)
+    - Si contacto NO tiene nombre (es desconocido) → RESPONDER siempre
+      (nuevos números o números que escribieron antes pero no están guardados)
     """
     try:
         # Parsear webhook — el proveedor normaliza el formato
@@ -80,15 +84,16 @@ async def webhook_handler(request: Request):
             if msg.es_propio or not msg.texto:
                 continue
 
-            # Si el contacto tiene nombre → está guardado en WhatsApp → IGNORAR
+            # Si tiene nombre (está guardado en WhatsApp) → IGNORAR completamente
             if msg.nombre_contacto:
-                logger.info(f"Mensaje ignorado de contacto guardado: {msg.nombre_contacto} ({msg.telefono})")
+                logger.info(f"🚫 Ignorado: contacto guardado {msg.nombre_contacto} ({msg.telefono})")
                 continue
 
-            # Si solo tiene número → es desconocido → RESPONDER
-            logger.info(f"Mensaje de número desconocido {msg.telefono}: {msg.texto}")
+            # Si NO tiene nombre (desconocido) → RESPONDER
+            logger.info(f"✅ Respondiendo a desconocido: {msg.telefono}")
+            logger.info(f"   Mensaje: {msg.texto}")
 
-            # Obtener historial ANTES de guardar el mensaje actual
+            # Obtener historial para contexto
             historial = await obtener_historial(msg.telefono)
 
             # Generar respuesta con Claude
@@ -101,7 +106,7 @@ async def webhook_handler(request: Request):
             # Enviar respuesta por WhatsApp via Whapi.cloud
             await proveedor.enviar_mensaje(msg.telefono, respuesta)
 
-            logger.info(f"Respuesta a {msg.telefono}: {respuesta}")
+            logger.info(f"✉️  Respuesta enviada: {respuesta[:80]}...")
 
         return {"status": "ok"}
 
