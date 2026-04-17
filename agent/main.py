@@ -56,6 +56,18 @@ async def health_check():
     return {"status": "ok", "service": "soporte-dietalvaro"}
 
 
+@app.post("/test")
+async def test_endpoint():
+    """Endpoint de prueba para diagnosticar si FastAPI funciona."""
+    return {"status": "test-ok", "message": "FastAPI está respondiendo correctamente"}
+
+
+@app.get("/test")
+async def test_endpoint_get():
+    """GET de prueba."""
+    return {"status": "test-ok-get"}
+
+
 @app.get("/webhook")
 async def webhook_verificacion(request: Request):
     """Verificación GET del webhook (requerido por Meta Cloud API, no-op para Whapi)."""
