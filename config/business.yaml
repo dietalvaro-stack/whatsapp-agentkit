@@ -1,0 +1,79 @@
+# Configuración del negocio — Generado por AgentKit
+negocio:
+  nombre: "@dietalvaro — Dietista Integrativo"
+  descripcion: >
+    Consultas online de dietista integrativo con enfoque ancestral y evolutivo.
+    Especializado en nutrición deportiva, obesidad, sobrepeso y salud metabólica.
+    Método basado en alimentación carnívora/keto/low-carb con densidad nutricional,
+    más trabajo de estilo de vida (sol, grounding, luz azul, entrenamiento de fuerza, descanso).
+    Consultas online 1 a 1, seguimiento personalizado y suplementación limpia.
+    También comparte códigos descuento de marcas colaboradoras.
+  horario: "Lunes a domingo de 7:30 a 19:00"
+  web: "dietalvaro.com"
+
+agente:
+  nombre: "Soporte Dietalvaro"
+  tono: "Empático, profesional, cercano y con un toque divertido"
+  casos_de_uso:
+    - "Responder dudas de clientes actuales y potenciales"
+    - "Atender consultas sobre el método y la filosofía de salud"
+    - "Informar sobre servicios y precios (asesoría 200€ / programa completo 600€)"
+    - "Compartir códigos descuento de marcas colaboradoras"
+    - "Soporte y seguimiento de pacientes en programa"
+
+servicios:
+  asesoria_puntual:
+    precio: "200€"
+    descripcion: "Auditoría profunda del caso, analíticas y hoja de ruta inmediata con nutrición y suplementación"
+  programa_completo:
+    precio: "600€"
+    descripcion: "Acompañamiento integral durante UN AÑO entero, monitorización de evolución y reprogramación de salud"
+
+marcas_colaboradoras:
+  - nombre: "AdaptoHeal"
+    codigo: "DIETALVARO"
+    enlace: "https://adaptohealue.com/alvarohernandez"
+  - nombre: "BeLevels"
+    codigo: "DIETALVARO"
+    enlace: "https://belevels.com/dietalvaro"
+  - nombre: "Synsera"
+    codigo: "10480112.nKy8SgkOaOVNaOsT"
+    enlace: "https://synseralabs.com"
+  - nombre: "NPRO"
+    codigo: "DIETALVARO"
+    enlace: "https://npro.es/"
+  - nombre: "Mun Kombucha"
+    codigo: "DIETALVARO"
+    enlace: "https://munkombucha.com"
+  - nombre: "Santa Paciencia"
+    codigo: "DIETALVARO"
+    enlace: "https://santapaciencia.es/"
+  - nombre: "Dioxnatur"
+    codigo: "DIETALVARO"
+    enlace: "https://dioxnatur.com/alvarohernandez"
+  - nombre: "CytoLED"
+    codigo: "DIETALVARO"
+    enlace: "https://cytoled.com/discount/DIETALVARO"
+  - nombre: "EMR-TEK"
+    codigo: "ALVARO25821"
+    enlace: "https://www.emr-tek.com/ALVARO25821"
+  - nombre: "Apricotte"
+    codigo: "9822433.jeNGxJy1DZ9"
+    enlace: "https://apricotte.com"
+  - nombre: "Alkanatur"
+    codigo: "DIETALVARO"
+    enlace: "https://alkanatur.com/es/"
+  - nombre: "EKIO"
+    codigo: "DIETALVARO12"
+    enlace: "https://electrosmogespana.com/"
+  - nombre: "Denisse Clyton"
+    codigo: "9676025.lVFiuzDeDk2"
+    enlace: "https://denisseclyton.com"
+  - nombre: "Planeta Huerto"
+    codigo: ""
+    enlace: "https://www.planetahuerto.es/"
+
+metadata:
+  creado: "2026-04-17"
+  version: "1.0"
+  proveedor_whatsapp: "whapi"
