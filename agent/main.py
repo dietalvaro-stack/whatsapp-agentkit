@@ -3,6 +3,7 @@
 
 """
 Servidor principal del agente de WhatsApp.
+Recibe mensajes vía webhook, procesa con Claude, responde automáticamente.
 Funciona con cualquier proveedor (Whapi, Meta, Twilio) gracias a la capa de providers.
 """
 
