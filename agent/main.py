@@ -1,17 +1,10 @@
 # agent/main.py — Servidor FastAPI + Webhook de WhatsApp
-# Generado por AgentKit
-
-"""
-Servidor principal del agente de WhatsApp.
-Recibe mensajes vía webhook, procesa con Claude, responde automáticamente.
-Funciona con cualquier proveedor (Whapi, Meta, Twilio) gracias a la capa de providers.
-"""
 
 import os
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from dotenv import load_dotenv
 
 from agent.brain import generar_respuesta
@@ -20,22 +13,17 @@ from agent.providers import obtener_proveedor
 
 load_dotenv()
 
-# Configuración de logging según entorno
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 log_level = logging.DEBUG if ENVIRONMENT == "development" else logging.INFO
 logging.basicConfig(level=log_level)
 logger = logging.getLogger("agentkit")
 
-# Proveedor de WhatsApp (se configura en .env con WHATSAPP_PROVIDER)
 proveedor = obtener_proveedor()
 PORT = int(os.getenv("PORT", 8000))
 
 
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Inicializa la base de datos al arrancar el servidor."""
     await inicializar_db()
     logger.info("Base de datos inicializada")
     logger.info(f"Servidor AgentKit corriendo en puerto {PORT}")
@@ -44,7 +32,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Soporte Dietalvaro — WhatsApp AI Agent",
+    title="Soporte Dietalvaro",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -52,25 +40,11 @@ app = FastAPI(
 
 @app.get("/")
 async def health_check():
-    """Endpoint de salud para Railway/monitoreo."""
     return {"status": "ok", "service": "soporte-dietalvaro"}
 
 
-@app.post("/test")
-async def test_endpoint():
-    """Endpoint de prueba para diagnosticar si FastAPI funciona."""
-    return {"status": "test-ok", "message": "FastAPI está respondiendo correctamente"}
-
-
-@app.get("/test")
-async def test_endpoint_get():
-    """GET de prueba."""
-    return {"status": "test-ok-get"}
-
-
 @app.get("/webhook")
-async def webhook_verificacion(request: Request):
-    """Verificación GET del webhook (requerido por Meta Cloud API, no-op para Whapi)."""
+async def webhook_get(request: Request):
     resultado = await proveedor.validar_webhook(request)
     if resultado is not None:
         return PlainTextResponse(str(resultado))
@@ -78,51 +52,38 @@ async def webhook_verificacion(request: Request):
 
 
 @app.post("/webhook")
-async def webhook_handler(request: Request):
-    """
-    Recibe mensajes de WhatsApp via Whapi.cloud.
-    Procesa el mensaje, genera respuesta con Claude y la envía de vuelta.
-
-    Lógica simple:
-    - Si contacto tiene nombre en WhatsApp (está guardado) → IGNORAR (sin excepciones)
-    - Si contacto NO tiene nombre (es desconocido) → RESPONDER siempre
-      (nuevos números o números que escribieron antes pero no están guardados)
-    """
+async def webhook_post(request: Request):
     try:
-        # Parsear webhook — el proveedor normaliza el formato
+        logger.info("📨 Webhook recibido")
+
         mensajes = await proveedor.parsear_webhook(request)
+        logger.info(f"📨 {len(mensajes)} mensajes parseados")
 
         for msg in mensajes:
-            # Ignorar mensajes propios o vacíos
             if msg.es_propio or not msg.texto:
+                logger.info(f"Ignorando mensaje propio o vacío")
                 continue
 
-            # Si tiene nombre (está guardado en WhatsApp) → IGNORAR completamente
             if msg.nombre_contacto:
-                logger.info(f"🚫 Ignorado: contacto guardado {msg.nombre_contacto} ({msg.telefono})")
+                logger.info(f"🚫 Ignorado: contacto guardado {msg.nombre_contacto}")
                 continue
 
-            # Si NO tiene nombre (desconocido) → RESPONDER
-            logger.info(f"✅ Respondiendo a desconocido: {msg.telefono}")
-            logger.info(f"   Mensaje: {msg.texto}")
+            logger.info(f"✅ Procesando: {msg.telefono}")
 
-            # Obtener historial para contexto
             historial = await obtener_historial(msg.telefono)
-
-            # Generar respuesta con Claude
             respuesta = await generar_respuesta(msg.texto, historial)
 
-            # Guardar mensaje del usuario Y respuesta del agente en memoria
             await guardar_mensaje(msg.telefono, "user", msg.texto)
             await guardar_mensaje(msg.telefono, "assistant", respuesta)
-
-            # Enviar respuesta por WhatsApp via Whapi.cloud
             await proveedor.enviar_mensaje(msg.telefono, respuesta)
 
-            logger.info(f"✉️  Respuesta enviada: {respuesta[:80]}...")
+            logger.info(f"✉️  Respondido a {msg.telefono}")
 
         return {"status": "ok"}
 
     except Exception as e:
-        logger.error(f"Error en webhook: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ Error en webhook: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
