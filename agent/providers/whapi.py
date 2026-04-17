@@ -22,11 +22,20 @@ class ProveedorWhapi(ProveedorWhatsApp):
         body = await request.json()
         mensajes = []
         for msg in body.get("messages", []):
+            # Intentar extraer el nombre del contacto (si está guardado en WhatsApp)
+            nombre_contacto = ""
+            contact_data = msg.get("contact", {})
+            if isinstance(contact_data, dict):
+                nombre_contacto = contact_data.get("name", "")
+            elif isinstance(contact_data, str):
+                nombre_contacto = contact_data
+
             mensajes.append(MensajeEntrante(
                 telefono=msg.get("chat_id", ""),
                 texto=msg.get("text", {}).get("body", ""),
                 mensaje_id=msg.get("id", ""),
                 es_propio=msg.get("from_me", False),
+                nombre_contacto=nombre_contacto,
             ))
         return mensajes
 
