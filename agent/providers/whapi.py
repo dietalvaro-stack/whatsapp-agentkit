@@ -20,6 +20,13 @@ class ProveedorWhapi(ProveedorWhatsApp):
     async def parsear_webhook(self, request: Request) -> list[MensajeEntrante]:
         """Parsea el payload de Whapi.cloud."""
         body = await request.json()
+        logger.info(f"DEBUG: Tipo de body: {type(body)}, Contenido: {body}")
+
+        # Validar que body es un diccionario
+        if not isinstance(body, dict):
+            logger.error(f"ERROR: Body no es un diccionario, es: {type(body)}")
+            return []
+
         mensajes = []
         for msg in body.get("messages", []):
             # Intentar extraer el nombre del contacto (si está guardado en WhatsApp)
